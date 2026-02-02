@@ -1,4 +1,6 @@
-## renombra estte arhivo a .env
+## importante 
+## renombrar estte arhivo a .env
+
 PROXMOX_HOST="ip_proxmox_server"
 USER_NAME="usuario@pam" 
 PASSWORD="user_password"

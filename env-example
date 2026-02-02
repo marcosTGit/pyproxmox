@@ -1,0 +1,5 @@
+## renombra estte arhivo a .env
+PROXMOX_HOST="ip_proxmox_server"
+USER_NAME="usuario@pam" 
+PASSWORD="user_password"
+NODENAME="nombre_nodo_proxmox" ##nombre que le diste al nodo proxmox normalmente es pve, px

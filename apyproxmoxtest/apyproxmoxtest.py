@@ -10,18 +10,24 @@
 # ***************************************************************
 # ***************************************************************
 
-
 import requests
 import urllib3
 urllib3.disable_warnings()
 
-# Cargar variables del archivo .env
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
+PROXMOX_HOST = os.getenv('PROXMOX_HOST')
+USER_NAME = os.getenv('USER_NAME')
+PASSWORD = os.getenv('PASSWORD')
+NODENAME = os.getenv('NODENAME')
+if not PROXMOX_HOST and not USER_NAME and not NODENAME:
+    print ("Error: No se han definido las variables de entorno: PROXMOX_HOST, USER_NAME, PASSWORD, NODENAME")
+    exit()
 
-class Promox(): 
+
+class Proxmox(): 
     
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -30,18 +36,18 @@ class Promox():
         # INICIALIZAMOS LAS LA CLASE
         self.data={}
         self.vm_id=False
-        self.proxmoxhost=os.getenv('PROXMOX_HOST')
-        self.username=os.getenv('USER_NAME')
-        self.password=os.getenv('PASSWORD')
-        self.nodename=os.getenv('NODENAME')
+        self.proxmoxhost=PROXMOX_HOST
+        self.username=USER_NAME
+        self.password=PASSWORD
+        self.nodename=NODENAME
+            
         self.uri = f"https://{self.proxmoxhost}:8006/api2/json/access/ticket" # url para crear la sesion sesion 
         self.ticketrequestbody = {
             "username": self.username,
             "password": self.password
         }
         self.headers = { "Content-Type": "application/x-www-form-urlencoded"}
-        
-
+         
         
         try:   
             self.ticketresponse = requests.post(self.uri, verify=False, data= self.ticketrequestbody, headers= self.headers)
@@ -50,15 +56,17 @@ class Promox():
                     self.ticketdata = self.ticketresponse.json()
                     
                 except ValueError:
-                    self.data['errors']={"Error": "Unable to parse JSON response"}
+                    print("Error: Unable to parse JSON response")
+                    return
             else:
-                self.data['errors']={f"Request failed with status code {self.ticketresponse.status_code}"}
+               print(f"errors: Request failed with status code {self.ticketresponse.status_code}")
+               return
 
             self.ticket = self.ticketdata['data']['ticket']
             self.CSRFPreventionToken = self.ticketdata['data']['CSRFPreventionToken']
         except:
-            self.data['errors']={ "Error":"ticket request failed" }
-            return self.data
+            print("Error: ticket request failed")
+            return
         
         self.session = requests.Session()
         self.session.cookies.set('PVEAuthCookie', self.ticket)
@@ -70,17 +78,17 @@ class Promox():
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    def getVersion (self):
+    def getVersion(self):
         # 000000000000000000000000000000000000000000000000000000000000
         # intentamos obenter la version 
         # 000000000000000000000000000000000000000000000000000000000000
         
-        self.url_version = f"https://{self.proxmoxhost}:8006/api2/json/version"
         try:
+            self.url_version = f"https://{self.proxmoxhost}:8006/api2/json/version"
             response_version = self.session.get(self.url_version, headers=self.apiheaders, verify=False)
         except:
-            self.data['errors']={"Error": "API Request  version Failed" }
-            return self.data
+            print("Error: API Request  version Failed")
+            return
 
         
         if response_version.status_code == 200:
@@ -156,8 +164,8 @@ class Promox():
                     try:
                         response = self.session.post(baseuri, headers=self.apiheaders, verify=False)
                     except:
-                        self.data['errors']={"Error: API Request Failed"}
-                        return self.data
+                        print("Error: API Request Failed")
+                        return
                         
                     
                     if response.status_code == 200:
@@ -166,8 +174,8 @@ class Promox():
                         self.data ['data']['runstateinfo']=runstate
         
                     else:
-                        self.data['errors']={ "Error" : f"API request failed with status code {response.status_code}" }
-                        return self.data
+                        print(f"Error: API request failed with status code {response.status_code}")
+                        return
                     
         # esta lineas son para darle formato a los datos obtenidos
         self.data['qmpstatus']['resources']={}
@@ -184,12 +192,5 @@ class Promox():
     # 000000000000000000000000000000000000000000000000000000000000000000000000000000000
     
 
-px=Promox()
 
-datos=px.getInfoVMI(105)
-
-print(datos['qmpstatus']['resources'])
-
-# for d in datos['qmpstatus']:
-#     print(f"\t{d}:\t {datos['qmpstatus'][d]}")
 

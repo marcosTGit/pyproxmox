@@ -32,6 +32,9 @@ MANIFEST
 *.manifest
 *.spec
 
+# dependencias de desarrollo
+requirements-dev.txt
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
